@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Mock Phone – Digital Art</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <button id="soundToggle" class="sound-toggle" aria-pressed="false" title="Enable/Disable sound">🔊 Enable sound</button>
+
+      <div class="stage">
+        <div class="phone" role="region" aria-label="Mock Phone">
+          <div class="bezel">
+            <div class="notch" aria-hidden="true"></div>
+            <div class="screen">
+              <!-- Lock Screen -->
+              <section id="lockScreen" class="panel lock-screen" aria-hidden="false">
+                <div class="lock-time" aria-live="polite" aria-atomic="true">
+                  <div id="timeText" class="time">12:34</div>
+                  <div id="dateText" class="date">Tuesday, September 9</div>
+                </div>
+                <div id="notificationList" class="notifications" aria-live="polite" aria-relevant="additions"></div>
+                <div class="faceid-hint">Click to unlock</div>
+              </section>
+
+              <!-- Face ID / Camera Overlay (shown briefly during unlock) -->
+              <div id="scanOverlay" class="scan-overlay hidden" aria-hidden="true">
+                <video id="cameraPreview" autoplay playsinline muted></video>
+                <div class="scan-ring"></div>
+                <div class="scan-text">Face ID</div>
+              </div>
+
+              <!-- Home Screen -->
+              <section id="homeScreen" class="panel home-screen hidden" aria-hidden="true">
+                <div class="home-top">
+                  <button id="lockBtn" class="lock-btn" title="Lock the phone" aria-label="Lock phone">Lock</button>
+                </div>
+                <div class="home-empty">
+                  <p>You have no new notifications...</p>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <noscript>
+        <div class="noscript">This experience requires JavaScript.</div>
+      </noscript>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+  </html>
+
+
