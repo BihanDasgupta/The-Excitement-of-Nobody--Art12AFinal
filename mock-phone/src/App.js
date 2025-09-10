@@ -139,6 +139,7 @@ function App() {
   const audioEnabledRef = useRef(false);
   const [scanning, setScanning] = useState(false);
   const [detected, setDetected] = useState(false);
+  const isLockedRef = useRef(true);
 
   const audioContextRef = useRef(null);
   const timerRef = useRef(null);
@@ -225,6 +226,11 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLocked]);
 
+  // Keep a ref of isLocked for handlers that should not re-subscribe
+  useEffect(() => {
+    isLockedRef.current = isLocked;
+  }, [isLocked]);
+
   const beginFaceId = async () => {
     if (!isLocked) return;
     // Enable audio on first interaction
@@ -274,9 +280,23 @@ function App() {
     const activate = () => {
       setAudioEnabled(true);
       ensureAudioContext();
-      // Give immediate audible confirmation while locked
-      if (isLocked) {
-        beepNow(true);
+      // Immediate confirmation beep without depending on state/closures
+      if (isLockedRef.current) {
+        const ctx = audioContextRef.current;
+        if (ctx) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const tone = 440 + Math.random() * 440;
+          const now = ctx.currentTime;
+          osc.frequency.value = tone;
+          osc.type = 'triangle';
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        }
       }
     };
     const onKeydown = (e) => {
