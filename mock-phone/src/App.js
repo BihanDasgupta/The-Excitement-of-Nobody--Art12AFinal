@@ -136,6 +136,7 @@ function App() {
   const [timeText, setTimeText] = useState(() => formatTime(new Date()));
   const [dateText, setDateText] = useState(() => formatDate(new Date()));
   const [audioEnabled, setAudioEnabled] = useState(false);
+  const audioEnabledRef = useRef(false);
   const [scanning, setScanning] = useState(false);
   const [detected, setDetected] = useState(false);
 
@@ -161,8 +162,8 @@ function App() {
     }
   };
 
-  const playBeep = () => {
-    if (!audioEnabled) return;
+  const beepNow = (force = false) => {
+    if (!force && !audioEnabledRef.current) return;
     ensureAudioContext();
     const ctx = audioContextRef.current;
     if (!ctx) return;
@@ -209,7 +210,7 @@ function App() {
         const next = [createNotification(), ...prev];
         return next.slice(0, 60);
       });
-      playBeep();
+      beepNow();
       scheduleNextNotification();
     }, delay);
   };
@@ -268,15 +269,52 @@ function App() {
     ensureAudioContext();
   };
 
-  // Auto-enable audio on first user interaction anywhere
+  // Auto-enable audio on first user interaction (robust across devices/browsers)
   useEffect(() => {
-    const onFirstInteract = () => {
+    const activate = () => {
       setAudioEnabled(true);
       ensureAudioContext();
+      // Give immediate audible confirmation while locked
+      if (isLocked) {
+        beepNow(true);
+      }
     };
-    window.addEventListener('pointerdown', onFirstInteract, { once: true });
-    return () => window.removeEventListener('pointerdown', onFirstInteract);
+    const onKeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') activate();
+    };
+    const opts = { once: true, passive: true };
+    window.addEventListener('pointerdown', activate, opts);
+    window.addEventListener('touchstart', activate, opts);
+    window.addEventListener('click', activate, opts);
+    window.addEventListener('keydown', onKeydown, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', activate);
+      window.removeEventListener('touchstart', activate);
+      window.removeEventListener('click', activate);
+      window.removeEventListener('keydown', onKeydown);
+    };
   }, []);
+
+  // Resume audio context when returning to the tab (some browsers suspend it)
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && audioEnabled) {
+        ensureAudioContext();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioEnabled]);
+
+  // Keep ref in sync and play a catch-up beep if notes already exist while locked
+  useEffect(() => {
+    audioEnabledRef.current = audioEnabled;
+    if (audioEnabled && isLocked && notes.length > 0) {
+      beepNow(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioEnabled, isLocked, notes.length]);
 
   return (
     <div>
